@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINA Payment Registration</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+  </head>
+  <body>
+    <!-- Main Form Page -->
+    <div id="formPage">
+      <div class="logo-container">
+        <img src="bina-logo.png" alt="BINA Logo" />
+      </div>
+
+      <h2>Registration Payment</h2>
+
+      <div class="form-info-box">
+        <p>
+          <i class="fas fa-info-circle"></i> This form is for creating a student
+          profile and processing payment. After successful payment, we'll set up
+          the student's profile and send confirmation within 24 hours.
+        </p>
+      </div>
+
+      <form id="paymentForm">
+        <div class="input-group">
+          <label for="name"><i class="fas fa-user"></i> Student's Name:</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Enter student's full name"
+            required
+          />
+          <small
+            >Please enter the student's name as it should appear on their
+            profile</small
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="email"
+            ><i class="fas fa-envelope"></i> Parent/Guardian Email:</label
+          >
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Enter your email address"
+            required
+          />
+          <small
+            >All communications and login details will be sent to this
+            email</small
+          >
+        </div>
+
+        <div class="input-group">
+          <label for="confirmEmail"
+            ><i class="fas fa-envelope-open"></i> Confirm Email:</label
+          >
+          <input
+            type="email"
+            id="confirmEmail"
+            name="confirmEmail"
+            placeholder="Confirm your email address"
+            required
+          />
+          <small class="validation-message" id="emailError"></small>
+        </div>
+
+        <div class="input-group">
+          <label for="phone"><i class="fas fa-phone"></i> Phone Number:</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="Enter your phone number"
+            required
+          />
+          <small>For payment verification and urgent communications</small>
+        </div>
+
+        <div class="input-group">
+          <label for="amount"
+            ><i class="fas fa-money-bill-wave"></i> Amount:</label
+          >
+          <input
+            type="text"
+            id="amount"
+            name="amount"
+            value="5,000 NGN"
+            readonly
+          />
+          <small>Fixed registration fee</small>
+        </div>
+
+        <div class="input-group">
+          <label for="password"
+            ><i class="fas fa-lock"></i> Create Password:</label
+          >
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Create a secure password"
+            required
+          />
+          <small
+            >This password will be used for accessing the student profile</small
+          >
+        </div>
+
+        <div class="terms-checkbox">
+          <input type="checkbox" id="terms" name="terms" required />
+          <label for="terms">I agree to the terms and conditions</label>
+        </div>
+
+        <button type="button" id="payButton" onclick="validateAndPay()">
+          <i class="fas fa-credit-card"></i> Proceed to Payment
+        </button>
+      </form>
+    </div>
+
+    <!-- Success Page (Hidden by default) -->
+    <div id="successPage" style="display: none">
+      <div class="logo-container">
+        <img src="bina-logo.png" alt="BINA Logo" />
+      </div>
+
+      <div class="success-container">
+        <div class="success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h2>Payment Successful!</h2>
+        <p class="success-message">
+          Thank you for your registration payment. Your transaction has been
+          completed successfully.
+        </p>
+        <div class="transaction-details">
+          <p>
+            <strong>Transaction Reference:</strong>
+            <span id="transactionRef"></span>
+          </p>
+          <p>
+            <strong>Student Name:</strong> <span id="studentNameConfirm"></span>
+          </p>
+          <p><strong>Amount Paid:</strong> 5,000 NGN</p>
+        </div>
+        <div class="next-steps">
+          <h3><i class="fas fa-clipboard-list"></i> Next Steps</h3>
+          <ol>
+            <li>We have received your payment and registration information.</li>
+            <li>
+              Our team will create a student profile within the next 24 hours.
+            </li>
+            <li>
+              Login credentials and further instructions will be sent to your
+              email.
+            </li>
+            <li>If you have any questions, please contact our support team.</li>
+          </ol>
+        </div>
+        <p class="contact-info">
+          For any inquiries, please contact
+          <a href="mailto:binativit@gmail.com">binativit@gmail.com</a>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Email validation
+      document
+        .getElementById("confirmEmail")
+        .addEventListener("blur", function () {
+          const email = document.getElementById("email").value;
+          const confirmEmail = this.value;
+          const errorElement = document.getElementById("emailError");
+
+          if (email !== confirmEmail) {
+            errorElement.textContent = "Emails do not match!";
+            errorElement.style.color = "red";
+            this.style.borderColor = "red";
+          } else {
+            errorElement.textContent = "Emails match!";
+            errorElement.style.color = "green";
+            this.style.borderColor = "green";
+          }
+        });
+
+      // Form validation before payment
+      function validateAndPay() {
+        // Get form elements
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const confirmEmail = document.getElementById("confirmEmail").value;
+        const phone = document.getElementById("phone").value;
+        const password = document.getElementById("password").value;
+        const terms = document.getElementById("terms").checked;
+
+        // Basic validation
+        if (!name || !email || !confirmEmail || !phone || !password) {
+          alert("Please fill in all required fields");
+          return;
+        }
+
+        if (email !== confirmEmail) {
+          alert("Email addresses do not match");
+          return;
+        }
+
+        if (!terms) {
+          alert("Please accept the terms and conditions");
+          return;
+        }
+
+        // If validation passes, proceed with payment
+        payWithPaystack();
+      }
+
+      // Paystack integration
+      function payWithPaystack() {
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const phone = document.getElementById("phone").value;
+
+        let handler = PaystackPop.setup({
+          key: "pk_live_2e57947c4049ce5ffba1eba23d52af13e7927faf", // Replace with your Paystack public key
+          email: "binativit@gmail.com",
+          amount: 500000, // Amount in kobo (5000 NGN)
+          currency: "NGN",
+          ref: "BINA" + Math.floor(Math.random() * 1000000000 + 1),
+          metadata: {
+            custom_fields: [
+              {
+                display_name: "Student Name",
+                variable_name: "student_name",
+                value: name,
+              },
+              {
+                display_name: "Phone Number",
+                variable_name: "phone",
+                value: phone,
+              },
+            ],
+          },
+          callback: function (response) {
+            // Store data in Google Sheets (you'll implement this part)
+            const formData = {
+              student_name: name,
+              email: email,
+              phone: phone,
+              transaction_ref: response.reference,
+            };
+
+            // This is where you'd send data to Google Sheets via API
+            // For now, we'll simulate success and show the success page
+
+            // Update success page with transaction details
+            document.getElementById("transactionRef").textContent =
+              response.reference;
+            document.getElementById("studentNameConfirm").textContent = name;
+
+            // Hide form page, show success page
+            document.getElementById("formPage").style.display = "none";
+            document.getElementById("successPage").style.display = "block";
+
+            // Optional: Send form data to Google Sheets
+            sendToGoogleSheets(formData);
+          },
+          onClose: function () {
+            alert(
+              "Payment window closed. Please try again to complete your registration."
+            );
+          },
+        });
+        handler.openIframe();
+      }
+
+      // Function to send data to Google Sheets
+      function sendToGoogleSheets(data) {
+        // Replace with your Google Script URL
+        const sheetScriptURL =
+          "https://script.google.com/macros/s/AKfycbympq_oTb7tLUWrNRYDua4t0vjWgQFZbR6t68RT7Zr7g1GnbVBhjsS0sZ-uwgkkqd5_VA/exec";
+
+        // Include password in the data
+        data.password = document.getElementById("password").value;
+
+        // Send the data to Google Sheets
+        fetch(sheetScriptURL, {
+          method: "POST",
+          mode: "no-cors",
+          cache: "no-cache",
+          redirect: "follow",
+          body: JSON.stringify(data),
+        })
+          .then((response) =>
+            console.log("Success: Data sent to Google Sheets")
+          )
+          .catch((error) => console.error("Error:", error));
+      }
+    </script>
+  </body>
+</html>
