@@ -95,10 +95,42 @@
             type="text"
             id="amount"
             name="amount"
-            value="5,000 NGN"
+            value="8,000 NGN"
             readonly
           />
           <small>Fixed registration fee</small>
+        </div>
+
+        <!-- New Survey Question - Where did you hear about us? -->
+        <div class="input-group">
+          <label for="referralSource"
+            ><i class="fas fa-map-marker-alt"></i> Where did you hear about
+            us?:</label
+          >
+          <select id="referralSource" name="referralSource">
+            <option value="">-- Select an option --</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Friend or Family">Friend or Family</option>
+            <option value="Google Search">Google Search</option>
+            <option value="School Event">School Event</option>
+            <option value="Flyer/Poster">Flyer/Poster</option>
+            <option value="Radio/TV">Radio/TV</option>
+            <option value="Other">Other</option>
+          </select>
+          <small>This helps us understand how to better reach students</small>
+        </div>
+
+        <!-- Conditional field that appears when "Other" is selected -->
+        <div class="input-group" id="otherSourceGroup" style="display: none">
+          <label for="otherSource"
+            ><i class="fas fa-pen"></i> Please specify:</label
+          >
+          <input
+            type="text"
+            id="otherSource"
+            name="otherSource"
+            placeholder="Please tell us where you heard about us"
+          />
         </div>
 
         <div class="input-group">
@@ -113,7 +145,7 @@
             required
           />
           <small
-            >This password will be used for accessing the student profile</small
+            >This password will be used for creating the student profile</small
           >
         </div>
 
@@ -151,7 +183,7 @@
           <p>
             <strong>Student Name:</strong> <span id="studentNameConfirm"></span>
           </p>
-          <p><strong>Amount Paid:</strong> 5,000 NGN</p>
+          <p><strong>Amount Paid:</strong> 8,000 NGN</p>
         </div>
         <div class="next-steps">
           <h3><i class="fas fa-clipboard-list"></i> Next Steps</h3>
@@ -175,6 +207,19 @@
     </div>
 
     <script>
+      // Show/hide the "Other" text field based on dropdown selection
+      document
+        .getElementById("referralSource")
+        .addEventListener("change", function () {
+          const otherGroup = document.getElementById("otherSourceGroup");
+          if (this.value === "Other") {
+            otherGroup.style.display = "block";
+          } else {
+            otherGroup.style.display = "none";
+            document.getElementById("otherSource").value = "";
+          }
+        });
+
       // Email validation
       document
         .getElementById("confirmEmail")
@@ -229,11 +274,24 @@
         const name = document.getElementById("name").value;
         const email = document.getElementById("email").value;
         const phone = document.getElementById("phone").value;
+        const password = document.getElementById("password").value;
+
+        // Get referral source information
+        const referralSource = document.getElementById("referralSource").value;
+        let referralDetails = referralSource;
+
+        // If "Other" was selected, use the specified text
+        if (referralSource === "Other") {
+          const otherSource = document.getElementById("otherSource").value;
+          if (otherSource) {
+            referralDetails = "Other: " + otherSource;
+          }
+        }
 
         let handler = PaystackPop.setup({
           key: "pk_live_2e57947c4049ce5ffba1eba23d52af13e7927faf", // Replace with your Paystack public key
           email: "binativit@gmail.com",
-          amount: 500000, // Amount in kobo (5000 NGN)
+          amount: 800000, // Amount in kobo (5000 NGN)
           currency: "NGN",
           ref: "BINA" + Math.floor(Math.random() * 1000000000 + 1),
           metadata: {
@@ -248,19 +306,23 @@
                 variable_name: "phone",
                 value: phone,
               },
+              {
+                display_name: "Referral Source",
+                variable_name: "referral_source",
+                value: referralDetails,
+              },
             ],
           },
           callback: function (response) {
-            // Store data in Google Sheets (you'll implement this part)
+            // Create data object to send to Google Sheets
             const formData = {
               student_name: name,
               email: email,
               phone: phone,
+              password: password,
               transaction_ref: response.reference,
+              referral_source: referralDetails,
             };
-
-            // This is where you'd send data to Google Sheets via API
-            // For now, we'll simulate success and show the success page
 
             // Update success page with transaction details
             document.getElementById("transactionRef").textContent =
@@ -271,7 +333,7 @@
             document.getElementById("formPage").style.display = "none";
             document.getElementById("successPage").style.display = "block";
 
-            // Optional: Send form data to Google Sheets
+            // Send form data to Google Sheets
             sendToGoogleSheets(formData);
           },
           onClose: function () {
@@ -287,10 +349,9 @@
       function sendToGoogleSheets(data) {
         // Replace with your Google Script URL
         const sheetScriptURL =
-          "https://script.google.com/macros/s/AKfycbympq_oTb7tLUWrNRYDua4t0vjWgQFZbR6t68RT7Zr7g1GnbVBhjsS0sZ-uwgkkqd5_VA/exec";
+          "https://script.google.com/macros/s/AKfycbwvwp84jeuKCyDd9g-RlzmC_v5kh981Q7WndGhXxU1yjhoM-ybbij4kl_BGWGkQMLk0ug/exec";
 
-        // Include password in the data
-        data.password = document.getElementById("password").value;
+        console.log("Sending data to Google Sheets:", data); // Debug log
 
         // Send the data to Google Sheets
         fetch(sheetScriptURL, {
@@ -300,9 +361,9 @@
           redirect: "follow",
           body: JSON.stringify(data),
         })
-          .then((response) =>
-            console.log("Success: Data sent to Google Sheets")
-          )
+          .then((response) => {
+            console.log("Success: Data sent to Google Sheets");
+          })
           .catch((error) => console.error("Error:", error));
       }
     </script>

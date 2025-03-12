@@ -130,7 +130,8 @@ label i {
   text-align: center;
 }
 
-input {
+input,
+select {
   width: 100%;
   padding: 12px 15px;
   border: 1px solid #e0e0e0;
@@ -139,7 +140,8 @@ input {
   transition: all 0.3s ease;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: var(--bina-yellow);
   box-shadow: 0 0 0 2px rgba(255, 189, 0, 0.2);
   outline: none;
