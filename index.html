@@ -10,6 +10,41 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
     <script src="https://js.paystack.co/v1/inline.js"></script>
+    <style>
+      /* Add styles for password field with eye icon */
+      .password-container {
+        position: relative;
+        width: 100%;
+      }
+
+      .password-container input {
+        width: 100%;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #666;
+      }
+
+      .password-strength {
+        margin-top: 5px;
+        font-size: 12px;
+      }
+
+      .invalid {
+        color: red;
+        border-color: red;
+      }
+
+      .valid {
+        color: green;
+        border-color: green;
+      }
+    </style>
   </head>
   <body>
     <!-- Main Form Page -->
@@ -42,6 +77,20 @@
             >Please enter the student's name as it should appear on their
             profile</small
           >
+        </div>
+
+        <!-- New Version dropdown -->
+        <div class="input-group">
+          <label for="version"
+            ><i class="fas fa-graduation-cap"></i> Version:</label
+          >
+          <select id="version" name="version" required>
+            <option value="">-- Select Version --</option>
+            <option value="Primary">Primary</option>
+            <option value="Junior Secondary">Junior Secondary</option>
+            <option value="Senior Secondary">Senior Secondary</option>
+          </select>
+          <small>Select the student's educational level</small>
         </div>
 
         <div class="input-group">
@@ -101,51 +150,40 @@
           <small>Fixed registration fee</small>
         </div>
 
-        <!-- New Survey Question - Where did you hear about us? -->
+        <!-- Changed to simple Referral text input -->
         <div class="input-group">
-          <label for="referralSource"
-            ><i class="fas fa-map-marker-alt"></i> Where did you hear about
-            us?:</label
-          >
-          <select id="referralSource" name="referralSource">
-            <option value="">-- Select an option --</option>
-            <option value="Social Media">Social Media</option>
-            <option value="Friend or Family">Friend or Family</option>
-            <option value="Google Search">Google Search</option>
-            <option value="School Event">School Event</option>
-            <option value="Flyer/Poster">Flyer/Poster</option>
-            <option value="Radio/TV">Radio/TV</option>
-            <option value="Other">Other</option>
-          </select>
-          <small>This helps us understand how to better reach students</small>
-        </div>
-
-        <!-- Conditional field that appears when "Other" is selected -->
-        <div class="input-group" id="otherSourceGroup" style="display: none">
-          <label for="otherSource"
-            ><i class="fas fa-pen"></i> Please specify:</label
+          <label for="referral"
+            ><i class="fas fa-user-friends"></i> Referral:</label
           >
           <input
             type="text"
-            id="otherSource"
-            name="otherSource"
-            placeholder="Please tell us where you heard about us"
+            id="referral"
+            name="referral"
+            placeholder="Enter referral information (optional)"
           />
+          <small>If someone referred you, please enter their name</small>
         </div>
 
+        <!-- Updated password field with visibility toggle and validation -->
         <div class="input-group">
           <label for="password"
             ><i class="fas fa-lock"></i> Create Password:</label
           >
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Create a secure password"
-            required
-          />
-          <small
-            >This password will be used for creating the student profile</small
+          <div class="password-container">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Create a secure password (minimum 6 characters)"
+              required
+              minlength="6"
+            />
+            <span class="password-toggle" onclick="togglePasswordVisibility()">
+              <i class="fas fa-eye" id="togglePassword"></i>
+            </span>
+          </div>
+          <small id="passwordHelp"
+            >Password must be at least 6 characters long</small
           >
         </div>
 
@@ -207,16 +245,38 @@
     </div>
 
     <script>
-      // Show/hide the "Other" text field based on dropdown selection
+      // Toggle password visibility
+      function togglePasswordVisibility() {
+        const passwordInput = document.getElementById("password");
+        const toggleIcon = document.getElementById("togglePassword");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggleIcon.classList.remove("fa-eye");
+          toggleIcon.classList.add("fa-eye-slash");
+        } else {
+          passwordInput.type = "password";
+          toggleIcon.classList.remove("fa-eye-slash");
+          toggleIcon.classList.add("fa-eye");
+        }
+      }
+
+      // Password validation
       document
-        .getElementById("referralSource")
-        .addEventListener("change", function () {
-          const otherGroup = document.getElementById("otherSourceGroup");
-          if (this.value === "Other") {
-            otherGroup.style.display = "block";
+        .getElementById("password")
+        .addEventListener("input", function () {
+          const passwordHelp = document.getElementById("passwordHelp");
+          const passwordInput = document.getElementById("password");
+
+          if (this.value.length < 6) {
+            passwordHelp.className = "invalid";
+            passwordHelp.textContent =
+              "Password must be at least 6 characters long";
+            passwordInput.style.borderColor = "red";
           } else {
-            otherGroup.style.display = "none";
-            document.getElementById("otherSource").value = "";
+            passwordHelp.className = "valid";
+            passwordHelp.textContent = "Password length is valid";
+            passwordInput.style.borderColor = "green";
           }
         });
 
@@ -243,6 +303,7 @@
       function validateAndPay() {
         // Get form elements
         const name = document.getElementById("name").value;
+        const version = document.getElementById("version").value;
         const email = document.getElementById("email").value;
         const confirmEmail = document.getElementById("confirmEmail").value;
         const phone = document.getElementById("phone").value;
@@ -250,13 +311,26 @@
         const terms = document.getElementById("terms").checked;
 
         // Basic validation
-        if (!name || !email || !confirmEmail || !phone || !password) {
+        if (
+          !name ||
+          !version ||
+          !email ||
+          !confirmEmail ||
+          !phone ||
+          !password
+        ) {
           alert("Please fill in all required fields");
           return;
         }
 
         if (email !== confirmEmail) {
           alert("Email addresses do not match");
+          return;
+        }
+
+        // Password length validation
+        if (password.length < 6) {
+          alert("Password must be at least 6 characters long");
           return;
         }
 
@@ -272,26 +346,16 @@
       // Paystack integration
       function payWithPaystack() {
         const name = document.getElementById("name").value;
+        const version = document.getElementById("version").value;
         const email = document.getElementById("email").value;
         const phone = document.getElementById("phone").value;
         const password = document.getElementById("password").value;
-
-        // Get referral source information
-        const referralSource = document.getElementById("referralSource").value;
-        let referralDetails = referralSource;
-
-        // If "Other" was selected, use the specified text
-        if (referralSource === "Other") {
-          const otherSource = document.getElementById("otherSource").value;
-          if (otherSource) {
-            referralDetails = "Other: " + otherSource;
-          }
-        }
+        const referral = document.getElementById("referral").value;
 
         let handler = PaystackPop.setup({
           key: "pk_live_43798c1371daf87356bc34e048d4ffbc41601a43", // Replace with your Paystack public key
           email: email,
-          amount: 800000, // Amount in kobo (5000 NGN)
+          amount: 10000, // Amount in kobo (8000 NGN)
           currency: "NGN",
           ref: "BINA" + Math.floor(Math.random() * 1000000000 + 1),
           metadata: {
@@ -302,14 +366,19 @@
                 value: name,
               },
               {
+                display_name: "Version",
+                variable_name: "version",
+                value: version,
+              },
+              {
                 display_name: "Phone Number",
                 variable_name: "phone",
                 value: phone,
               },
               {
-                display_name: "Referral Source",
-                variable_name: "referral_source",
-                value: referralDetails,
+                display_name: "Referral",
+                variable_name: "referral",
+                value: referral || "Not provided",
               },
             ],
           },
@@ -317,11 +386,12 @@
             // Create data object to send to Google Sheets
             const formData = {
               student_name: name,
+              version: version,
               email: email,
               phone: phone,
               password: password,
               transaction_ref: response.reference,
-              referral_source: referralDetails,
+              referral: referral || "",
             };
 
             // Update success page with transaction details
@@ -349,7 +419,7 @@
       function sendToGoogleSheets(data) {
         // Replace with your Google Script URL
         const sheetScriptURL =
-          "https://script.google.com/macros/s/AKfycbwvwp84jeuKCyDd9g-RlzmC_v5kh981Q7WndGhXxU1yjhoM-ybbij4kl_BGWGkQMLk0ug/exec";
+          "https://script.google.com/macros/s/AKfycbwU1lsHJ3IwbO_JzKF-6I6IZezOVfTqdggbJblh1kOVkdKQTXH9JhVhIwAt1PaxGlGw4A/exec";
 
         console.log("Sending data to Google Sheets:", data); // Debug log
 
