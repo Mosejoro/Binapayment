@@ -44,6 +44,15 @@
         color: green;
         border-color: green;
       }
+
+      /* Added styles for conditional stream field */
+      .stream-field {
+        display: none;
+      }
+
+      .stream-field.visible {
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -84,13 +93,27 @@
           <label for="version"
             ><i class="fas fa-graduation-cap"></i> Version:</label
           >
-          <select id="version" name="version" required>
+          <select id="version" name="version" required onchange="handleVersionChange()">
             <option value="">-- Select Version --</option>
             <option value="Primary">Primary</option>
             <option value="Junior Secondary">Junior Secondary</option>
             <option value="Senior Secondary">Senior Secondary</option>
           </select>
           <small>Select the student's educational level</small>
+        </div>
+
+        <!-- Added conditional Stream field that only shows for Senior Secondary -->
+        <div class="input-group stream-field" id="streamField">
+          <label for="stream"
+            ><i class="fas fa-book"></i> Stream:</label
+          >
+          <select id="stream" name="stream">
+            <option value="">-- Select Stream --</option>
+            <option value="Science">Science</option>
+            <option value="Arts">Arts</option>
+            <option value="Commerce">Commerce</option>
+          </select>
+          <small>Select your preferred stream</small>
         </div>
 
         <div class="input-group">
@@ -245,6 +268,21 @@
     </div>
 
     <script>
+      function handleVersionChange() {
+        const version = document.getElementById("version").value;
+        const streamField = document.getElementById("streamField");
+        const streamSelect = document.getElementById("stream");
+
+        if (version === "Senior Secondary") {
+          streamField.classList.add("visible");
+          streamSelect.required = true;
+        } else {
+          streamField.classList.remove("visible");
+          streamSelect.required = false;
+          streamSelect.value = ""; // Reset stream selection
+        }
+      }
+
       // Toggle password visibility
       function togglePasswordVisibility() {
         const passwordInput = document.getElementById("password");
@@ -299,11 +337,11 @@
           }
         });
 
-      // Form validation before payment
       function validateAndPay() {
         // Get form elements
         const name = document.getElementById("name").value;
         const version = document.getElementById("version").value;
+        const stream = document.getElementById("stream").value;
         const email = document.getElementById("email").value;
         const confirmEmail = document.getElementById("confirmEmail").value;
         const phone = document.getElementById("phone").value;
@@ -320,6 +358,11 @@
           !password
         ) {
           alert("Please fill in all required fields");
+          return;
+        }
+
+        if (version === "Senior Secondary" && !stream) {
+          alert("Please select a stream for Senior Secondary");
           return;
         }
 
@@ -343,10 +386,10 @@
         payWithPaystack();
       }
 
-      // Paystack integration
       function payWithPaystack() {
         const name = document.getElementById("name").value;
         const version = document.getElementById("version").value;
+        const stream = document.getElementById("stream").value;
         const email = document.getElementById("email").value;
         const phone = document.getElementById("phone").value;
         const password = document.getElementById("password").value;
@@ -371,6 +414,11 @@
                 value: version,
               },
               {
+                display_name: "Stream",
+                variable_name: "stream",
+                value: stream || "Not applicable",
+              },
+              {
                 display_name: "Phone Number",
                 variable_name: "phone",
                 value: phone,
@@ -383,10 +431,10 @@
             ],
           },
           callback: function (response) {
-            // Create data object to send to Google Sheets
             const formData = {
               student_name: name,
               version: version,
+              stream: stream || "",
               email: email,
               phone: phone,
               password: password,
